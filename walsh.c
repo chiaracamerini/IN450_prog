@@ -1,3 +1,4 @@
+//test
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -8,6 +9,8 @@ int S[4][16];
 int B[48];
 int n=6, h;
 double coef=0;
+double M[8][64]; //su ogni riga un Sbox
+
 
 void convertToBinary(int i,int v[],int size){
 //prende in input il numero che voglio convertire e array dove voglio scriverlo in bit
@@ -67,7 +70,7 @@ double CalcoloCoef (int a[6], int sbox){
 			s=S8[r][c];
 		
 		h=s;
-		s=s+m;
+		s=s+m; //mi serve perchè F=F+(-1)^s
 		
 		if(s%2==0) //s è pari
 			F=F+1;
@@ -82,7 +85,7 @@ double CalcoloCoef (int a[6], int sbox){
 
 int sceltaentrata(int sbox){
 	//per ogni a calcolo F(a) e tengo quella più lontana da 1/2
-	float F,d=0;
+	double F,d=0;
 	int i,w;
 	int a[6];
 	
@@ -95,8 +98,10 @@ int sceltaentrata(int sbox){
 			d = fabs(F-0.5);
 			w=i;
 			coef=F;
+			
 		}
-	
+		
+		M[sbox][i]=F;
 	}
 	
 	return (w); //restituisce l'entrata ottimale
@@ -167,19 +172,30 @@ int main (){
 	//calcoliamo il primo coefficiente di correlazione
 	//seguiamo gli 1 calcoliamo per quell'entrata e Sbox il coeffi
 	// ogni volta facciamo il prodotto
-	int u=15;
+	int u;
 	int v[4], C[32], b[6];
 	int i,j,k,perm;
 	double F;
 	 
-	 printf("Inserire il numero della Sbox da cui partire \n");
-	 scanf("%d", &k);
 	 
 	 for(i=0; i<48; i++) //inizializzo il vettore
 	 	B[i]=0;
+	 	
+	 for(k=0;k<8;k++){
+	 	u=sceltauscita(k); //uscita ottimale al primo passaggio
+	 	convertToBinary(u,v,4); //scritto in v[] u in bit
+	 }
 	 
-	 u=sceltauscita(k); //uscita ottimale al primo passaggio
-	 convertToBinary(u,v,4); //scritto in v[] u in bit
+	 for(i=0;i<8;i++){
+	 	printf("I coefficienti per la sbox %d sono: \n", i+1);
+	 	for(j=0; j<64; j++){
+	 		printf("%lf |", M[i][j]);
+	 	}
+	 	 printf("\n");
+	 	 printf("\n");
+	 }
+	 
+	 printf("\n");
 	 
 	 for(i=0; i<4; i++){
 	 
@@ -207,7 +223,7 @@ int main (){
 				
 				F=CalcoloCoef(b,i);
 				coef=coef*F;
-				convertToBinary(h,v,4);	
+				convertToBinary(h,v,4);	//scriviamo in v[] h in  bit
 				coef=fabs(coef);
 				
 				for(j=0;j<4;j++){
@@ -230,14 +246,16 @@ int main (){
 			
 		}
 		
+				
+		
 		//espansione di C in B
 		for (i=0; i<32; i++)
 			expansion(i,C[i]);
 		
-		if(coef==0){
+		/* if(coef==0){
 			printf("Il coefficiente di propagazione è 0 al round %d \n",k+1);
 			break;
-		}
+		} */
 	
 	}
 	
